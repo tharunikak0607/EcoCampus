@@ -35,3 +35,7 @@ Java Mini Project
 ## Project Screenshots
 
 ![Main Menu](EcoCampus_Screenshots/01_Main_Menu.png.png)
+
+### 2. View All Readings
+
+![View All Readings](EcoCampus_Screenshots/02_All_Readings.png)
