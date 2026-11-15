@@ -31,3 +31,5 @@ How to Run
 Project Type
 
 Java Mini Project
+
+## Project Screenshots
