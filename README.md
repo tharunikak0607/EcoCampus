@@ -33,3 +33,5 @@ Project Type
 Java Mini Project
 
 ## Project Screenshots
+
+![Main Menu](EcoCampus_Screenshots/01_Main_Menu.png.png)
