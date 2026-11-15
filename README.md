@@ -38,4 +38,4 @@ Java Mini Project
 
 ### 2. View All Readings
 
-![View All Readings](EcoCampus_Screenshots/02_All_Readings.png)
+![View All Readings](EcoCampus_Screenshots/02_All_Readings.png.png)
