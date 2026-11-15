@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCampus – Energy Reading Analyzer</title>
+    <meta name="description"
+        content="EcoCampus Energy Reading Analyzer – Enterprise energy monitoring, anomaly detection, consumption trends, and billing intelligence connected to Java backend.">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Local Chart.js for 100% offline capability -->
+    <script src="js/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- ===================================================================
+             SIDEBAR NAVIGATION
+             =================================================================== -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-badge">⚡</div>
+                <div class="brand-text">
+                    <h1>EcoCampus</h1>
+                    <span>Energy Analyzer</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Navigation</div>
+                <a class="nav-item active" data-section="dashboard" id="nav-dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-item" data-section="analytics" id="nav-analytics">
+                    <span class="nav-icon">📈</span>
+                    <span>Energy Analytics</span>
+                </a>
+                <a class="nav-item" data-section="buildings" id="nav-buildings">
+                    <span class="nav-icon">🏢</span>
+                    <span>Buildings & Assets</span>
+                </a>
+                <a class="nav-item" data-section="anomalies" id="nav-anomalies">
+                    <span class="nav-icon">⚠️</span>
+                    <span>Anomalies & Alerts</span>
+                    <span class="nav-badge" id="sidebar-alert-badge" style="display: none;">0</span>
+                </a>
+                <a class="nav-item" data-section="billing" id="nav-billing">
+                    <span class="nav-icon">💰</span>
+                    <span>Bill Estimation</span>
+                </a>
+                <a class="nav-item" data-section="simulation" id="nav-simulation">
+                    <span class="nav-icon">⚡</span>
+                    <span>Readings & Simulation</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="backend-status-card">
+                    <div class="status-pulse" id="backend-pulse"></div>
+                    <div class="status-info">
+                        <div class="status-title" id="backend-status-text">Backend: Connected</div>
+                        <div class="status-subtitle">Java HttpServer • Port 8080</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ===================================================================
+             MAIN APPLICATION WRAPPER
+             =================================================================== -->
+        <div class="main-wrapper">
+
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="header-left">
+                    <h2 id="page-title">Dashboard Overview</h2>
+                    <p id="page-subtitle">Real-time electricity consumption & campus infrastructure metrics</p>
+                </div>
+                <div class="header-controls">
+                    <div id="header-monitoring-pill" class="tariff-quick-pill"
+                        style="display: none; background: #ecfdf5; border-color: #a7f3d0; color: #047857;"
+                        title="Automatic simulated meter reading stream active">
+                        <span class="status-pulse"
+                            style="width: 8px; height: 8px; background: #10b981; display: inline-block; margin-right: 4px;"></span>
+                        <strong id="header-monitoring-text">Live Monitoring (5s)</strong>
+                    </div>
+                    <div class="tariff-quick-pill" title="Default unit tariff configured in Java backend">
+                        <span>Tariff:</span>
+                        <strong id="header-tariff-display">₹8.50 / kWh</strong>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="btn-manual-refresh"
+                        title="Reload all metrics from Java backend">
+                        <span>🔄</span> Refresh Data
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="content-body">
+
+                <!-- ===============================================================
+                     SECTION 1: DASHBOARD OVERVIEW
+                     =============================================================== -->
+                <section class="section-view active" id="section-dashboard">
+
+                    <!-- Alert notification banner (if active repeated alerts exist) -->
+                    <div id="dashboard-alert-banner" style="display: none;" class="alert-callout danger">
+                        <div class="alert-icon">🚨</div>
+                        <div class="alert-content">
+                            <h4>Repeated High-Usage Breaches Detected!</h4>
+                            <p id="dashboard-alert-msg">One or more meters have repeatedly exceeded consumption
+                                thresholds. Check the Anomalies & Alerts section for investigation details.</p>
+                        </div>
+                    </div>
+
+                    <!-- Summary Metrics Grid -->
+                    <div class="metrics-grid">
+                        <!-- Total Energy -->
+                        <div class="metric-card accent-green">
+                            <div class="metric-top">
+                                <span class="metric-label">Total Campus Energy</span>
+                                <div class="metric-icon-box">⚡</div>
+                            </div>
+                            <div class="metric-value" id="card-total-energy">0.00 <small
+                                    style="font-size: 14px; font-weight: normal;">kWh</small></div>
+                            <div class="metric-sub">Across all recorded readings</div>
+                        </div>
+
+                        <!-- Estimated Bill -->
+                        <div class="metric-card accent-blue">
+                            <div class="metric-top">
+                                <span class="metric-label">Estimated Bill</span>
+                                <div class="metric-icon-box">₹</div>
+                            </div>
+                            <div class="metric-value" id="card-estimated-bill">₹ 0.00</div>
+                            <div class="metric-sub" id="card-tariff-rate">Tariff: ₹8.50 / unit</div>
+                        </div>
+
+                        <!-- Monitored Buildings -->
+                        <div class="metric-card accent-purple">
+                            <div class="metric-top">
+                                <span class="metric-label">Monitored Buildings</span>
+                                <div class="metric-icon-box">🏢</div>
+                            </div>
+                            <div class="metric-value" id="card-building-count">3</div>
+                            <div class="metric-sub" id="card-room-appliance-sub">3 Rooms • 3 Appliances</div>
+                        </div>
+
+                        <!-- Active Smart Meters -->
+                        <div class="metric-card accent-blue">
+                            <div class="metric-top">
+                                <span class="metric-label">Active Meters</span>
+                                <div class="metric-icon-box">📟</div>
+                            </div>
+                            <div class="metric-value" id="card-meter-count">3</div>
+                            <div class="metric-sub" id="card-reading-count">0 readings logged</div>
+                        </div>
+
+                        <!-- Active Anomalies -->
+                        <div class="metric-card accent-amber">
+                            <div class="metric-top">
+                                <span class="metric-label">Anomalies Detected</span>
+                                <div class="metric-icon-box">⚠️</div>
+                            </div>
+                            <div class="metric-value" id="card-anomaly-count">0</div>
+                            <div class="metric-sub" id="card-anomaly-threshold">Threshold: &gt; 100.0 kWh</div>
+                        </div>
+
+                        <!-- Repeated High-Usage Breaches -->
+                        <div class="metric-card accent-red">
+                            <div class="metric-top">
+                                <span class="metric-label">Repeated Alerts</span>
+                                <div class="metric-icon-box">🚨</div>
+                            </div>
+                            <div class="metric-value" id="card-repeated-alerts">0</div>
+                            <div class="metric-sub">Persistent energy spikes</div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Quick Banner (Daily & Weekly Deltas) -->
+                    <div class="comparison-banner-grid">
+                        <div class="comparison-box">
+                            <div class="comparison-header">
+                                <span class="comparison-title">Daily Energy Comparison (Today vs Yesterday)</span>
+                                <span class="diff-badge neutral" id="overview-day-badge">Analyzing...</span>
+                            </div>
+                            <div class="comparison-periods">
+                                <div class="period-stat">
+                                    <span class="label" id="overview-day-curr-label">Today</span>
+                                    <span class="val" id="overview-day-curr-val">0.00 kWh</span>
+                                </div>
+                                <div style="font-size: 20px; color: var(--text-muted);">vs</div>
+                                <div class="period-stat" style="text-align: right;">
+                                    <span class="label" id="overview-day-prev-label">Yesterday</span>
+                                    <span class="val" id="overview-day-prev-val">0.00 kWh</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="comparison-box">
+                            <div class="comparison-header">
+                                <span class="comparison-title">Weekly Energy Comparison (Current Week vs
+                                    Previous)</span>
+                                <span class="diff-badge neutral" id="overview-week-badge">Analyzing...</span>
+                            </div>
+                            <div class="comparison-periods">
+                                <div class="period-stat">
+                                    <span class="label" id="overview-week-curr-label">Current Week</span>
+                                    <span class="val" id="overview-week-curr-val">0.00 kWh</span>
+                                </div>
+                                <div style="font-size: 20px; color: var(--text-muted);">vs</div>
+                                <div class="period-stat" style="text-align: right;">
+                                    <span class="label" id="overview-week-prev-label">Previous Week</span>
+                                    <span class="val" id="overview-week-prev-val">0.00 kWh</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts 2-column Grid -->
+                    <div class="charts-grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>7-Day Consumption Trend</h3>
+                                    <p>Daily aggregated kilowatt-hours across campus</p>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-overview-trend"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Building Consumption Distribution</h3>
+                                    <p>Energy consumed by campus building</p>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-overview-buildings"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Latest Readings Table Preview -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <h3>Latest Ingested Readings</h3>
+                                <p>Real-time stream of smart meter readings logged in Java memory</p>
+                            </div>
+                            <button class="btn btn-outline btn-sm" onclick="navigateToSection('simulation')">View All
+                                Readings &rarr;</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Reading ID</th>
+                                        <th>Meter ID</th>
+                                        <th>Building & Room Location</th>
+                                        <th>Energy (kWh)</th>
+                                        <th>Timestamp</th>
+                                        <th>Source</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overview-latest-readings-body">
+                                    <tr>
+                                        <td colspan="6" class="empty-state">Loading latest readings from Java backend...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ===============================================================
+                     SECTION 2: ENERGY USAGE ANALYTICS
+                     =============================================================== -->
+                <section class="section-view" id="section-analytics">
+
+                    <!-- Date Selector & Analytics Subheader -->
+                    <div class="card" style="padding: 16px 24px; margin-bottom: 20px;">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 700;">Consumption Benchmark Analysis</h3>
+                                <p style="font-size: 13px; color: var(--text-muted);">Comparing historical energy cycles
+                                    using Java Date & Time API</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="analytics-ref-date" style="font-size: 13px; font-weight: 600;">Benchmark
+                                    Date:</label>
+                                <input type="date" id="analytics-ref-date" class="form-input"
+                                    style="width: auto; padding: 6px 12px;">
+                                <button class="btn btn-primary btn-sm" id="btn-apply-date-filter">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Detailed Cards -->
+                    <div class="comparison-banner-grid">
+                        <!-- Daily Deep Dive -->
+                        <div class="card" style="margin-bottom: 0;">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Day-over-Day (Daily) Comparison</h3>
+                                    <p id="analytics-day-period-text">Reference Day vs Previous Calendar Day</p>
+                                </div>
+                                <span class="diff-badge neutral" id="analytics-day-badge">0.00%</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                                <div
+                                    style="background-color: var(--primary-50); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--primary-100);">
+                                    <div
+                                        style="font-size: 11px; text-transform: uppercase; color: var(--primary-700); font-weight: 700;">
+                                        Reference Day Total</div>
+                                    <div style="font-size: 22px; font-weight: 800; color: var(--primary-800);"
+                                        id="analytics-day-curr-kwh">0.00 kWh</div>
+                                </div>
+                                <div
+                                    style="background-color: #f1f5f9; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                                    <div
+                                        style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">
+                                        Previous Day Total</div>
+                                    <div style="font-size: 22px; font-weight: 800; color: var(--text-primary);"
+                                        id="analytics-day-prev-kwh">0.00 kWh</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary); background: var(--bg-page); padding: 10px 14px; border-radius: var(--radius-sm); border-left: 3px solid var(--primary-500);"
+                                id="analytics-day-summary-text">
+                                Net change: 0.00 kWh
+                            </div>
+                        </div>
+
+                        <!-- Weekly Deep Dive -->
+                        <div class="card" style="margin-bottom: 0;">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Week-over-Week (Weekly) Comparison</h3>
+                                    <p id="analytics-week-period-text">Current Calendar Week vs Previous Calendar Week
+                                    </p>
+                                </div>
+                                <span class="diff-badge neutral" id="analytics-week-badge">0.00%</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                                <div
+                                    style="background-color: var(--primary-50); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--primary-100);">
+                                    <div
+                                        style="font-size: 11px; text-transform: uppercase; color: var(--primary-700); font-weight: 700;">
+                                        Current Week Total</div>
+                                    <div style="font-size: 22px; font-weight: 800; color: var(--primary-800);"
+                                        id="analytics-week-curr-kwh">0.00 kWh</div>
+                                </div>
+                                <div
+                                    style="background-color: #f1f5f9; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                                    <div
+                                        style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">
+                                        Previous Week Total</div>
+                                    <div style="font-size: 22px; font-weight: 800; color: var(--text-primary);"
+                                        id="analytics-week-prev-kwh">0.00 kWh</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary); background: var(--bg-page); padding: 10px 14px; border-radius: var(--radius-sm); border-left: 3px solid var(--primary-500);"
+                                id="analytics-week-summary-text">
+                                Net change: 0.00 kWh
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Charts -->
+                    <div class="charts-grid-2" style="margin-top: 24px;">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Daily Consumption History (7 Days)</h3>
+                                    <p>Kilowatt-hours per calendar date</p>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-analytics-daily"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Meter-wise Consumption Comparison</h3>
+                                    <p>Individual load profiles by smart meter</p>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-analytics-meters"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ===============================================================
+                     SECTION 3: BUILDING MANAGEMENT & ASSETS
+                     =============================================================== -->
+                <section class="section-view" id="section-buildings">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <h3>Campus Physical Asset Hierarchy</h3>
+                                <p>Demonstrating Java Object-Oriented Domain Modeling: <code>CampusEntity</code> &rarr;
+                                    <code>Building</code> &rarr; <code>Room</code> &rarr; <code>Appliance</code> &rarr;
+                                    <code>Meter</code></p>
+                            </div>
+                        </div>
+                        <div class="buildings-grid" id="buildings-cards-container">
+                            <!-- Dynamic building cards injected by JS -->
+                            <div class="empty-state">Loading buildings from Java backend...</div>
+                        </div>
+                    </div>
+
+                    <!-- Comprehensive Hierarchy & Meter Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <h3>Smart Meter Inventory & Energy Totals</h3>
+                                <p>Aggregated consumption per meter with associated physical assets</p>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Meter ID</th>
+                                        <th>Building</th>
+                                        <th>Room</th>
+                                        <th>Monitored Appliance</th>
+                                        <th>Readings Count</th>
+                                        <th>Total Consumed (kWh)</th>
+                                        <th>Share of Campus (%)</th>
+                                        <th>Est. Cost (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="buildings-meters-table-body">
+                                    <tr>
+                                        <td colspan="8" class="empty-state">Loading meter inventory...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ===============================================================
+                     SECTION 4: ANOMALIES & ALERT CENTER
+                     =============================================================== -->
+                <section class="section-view" id="section-anomalies">
+
+                    <!-- Strategy Pattern Info Callout -->
+                    <div class="alert-callout info">
+                        <div class="alert-icon">💡</div>
+                        <div class="alert-content">
+                            <h4>Strategy Design Pattern in Action</h4>
+                            <p>Anomalies are detected polymorphically using the Java <code>AnomalyDetector</code>
+                                interface. Stored readings are evaluated via independent algorithms:
+                                <strong>NegativeReadingDetector</strong> (&lt; 0.0 kWh) and
+                                <strong>HighUsageDetector</strong> (&gt; threshold).</p>
+                        </div>
+                    </div>
+
+                    <!-- Threshold Filter Controls -->
+                    <div class="card" style="padding: 18px 24px;">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+                            <div>
+                                <h3 style="font-size: 16px; font-weight: 700;">Anomaly Detection Parameters</h3>
+                                <p style="font-size: 13px; color: var(--text-muted);">Adjust the consumption threshold
+                                    evaluated by <code>HighUsageDetector.java</code></p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="anomaly-threshold-input" style="font-size: 13px; font-weight: 600;">High
+                                    Usage Threshold (kWh):</label>
+                                <input type="number" id="anomaly-threshold-input" class="form-input" value="100.0"
+                                    step="5" min="1" style="width: 120px;">
+                                <button class="btn btn-primary btn-sm" id="btn-apply-anomaly-thresh">Re-run
+                                    Detectors</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Repeated High-Usage Offender Meters -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <h3>Repeated High-Usage Meter Alerts</h3>
+                                <p>Offending meters meeting or exceeding &ge; 2 violations over the threshold (Grouped
+                                    via <code>HashMap&lt;String, List&lt;EnergyReading&gt;&gt;</code>)</p>
+                            </div>
+                            <span class="badge badge-anomaly-high" id="repeated-alerts-badge">0 Offending Meters</span>
+                        </div>
+                        <div id="repeated-alerts-container">
+                            <div class="empty-state">Loading repeated alerts...</div>
+                        </div>
+                    </div>
+
+                    <!-- Anomalies Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <h3>All Detected Anomalous Readings</h3>
+                                <p>Individual energy readings flagged by active Java detector strategies</p>
+                            </div>
+                            <span class="badge badge-anomaly-high" id="anomalies-count-badge">0 Anomalies</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Reading ID</th>
+                                        <th>Meter ID</th>
+                                        <th>Energy Consumed (kWh)</th>
+                                        <th>Timestamp</th>
+                                        <th>Detection Strategy</th>
+                                        <th>Severity</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="anomalies-table-body">
+                                    <tr>
+                                        <td colspan="6" class="empty-state">No anomalies detected.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ===============================================================
+                     SECTION 5: BILL ESTIMATION
+                     =============================================================== -->
+                <section class="section-view" id="section-billing">
+
+                    <!-- Grand Hero Bill Card -->
+                    <div class="bill-hero-card">
+                        <div class="bill-hero-main">
+                            <h3>Estimated Electricity Expenditure</h3>
+                            <div class="bill-hero-amount" id="bill-total-amount">₹ 0.00</div>
+                            <div class="bill-hero-details">
+                                <div>Total Energy: <strong id="bill-hero-kwh">0.00 kWh</strong></div>
+                                <div>Tariff Rate: <strong id="bill-hero-rate">₹8.50 / kWh</strong></div>
+                                <div>Currency: <strong>INR (₹)</strong></div>
+                            </div>
+                        </div>
+                        <div class="bill-calculator-panel">
+                            <label for="bill-tariff-input">Utility Tariff Simulator</label>
+                            <div class="tariff-input-group">
+                                <input type="number" id="bill-tariff-input" class="form-input" value="8.50" step="0.5"
+                                    min="0.1">
+                                <button class="btn btn-success" id="btn-recalculate-bill">Recalculate</button>
+                            </div>
+                            <p style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 8px;">
+                                Submits rate to <code>manager.calculateEstimatedBill(rate)</code>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Utility Tariff Disclaimer -->
+                    <div class="alert-callout info">
+                        <div class="alert-icon">ℹ️</div>
+                        <div class="alert-content">
+                            <h4>Official Utility Tariff Disclaimer</h4>
+                            <p id="bill-disclaimer-text">
+                                This calculation is strictly an ESTIMATE based on total recorded kWh and a flat unit
+                                rate. Actual utility electricity tariffs may differ significantly due to slab-wise
+                                pricing, peak/off-peak Time-of-Day (ToD) tariffs, fixed sanction load charges, power
+                                factor surcharges, and applicable state electricity duties / taxes.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Per-Meter Cost Breakdown Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <h3>Per-Meter Financial Breakdown</h3>
+                                <p>Proportionate electricity cost allocation for each sub-meter</p>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Meter ID</th>
+                                        <th>Building</th>
+                                        <th>Monitored Appliance</th>
+                                        <th>Energy Consumed (kWh)</th>
+                                        <th>Estimated Cost (₹)</th>
+                                        <th>Share of Total Bill (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bill-meter-breakdown-body">
+                                    <tr>
+                                        <td colspan="6" class="empty-state">Loading billing breakdown...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- ===============================================================
+                     SECTION 6: READINGS & SIMULATION LAB
+                     =============================================================== -->
+                <section class="section-view" id="section-simulation">
+
+                    <div class="charts-grid-2">
+                        <!-- Column 1: Manual Ingestion via Worker Thread -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Add Energy Reading (Multi-Threaded)</h3>
+                                    <p>Ingests reading asynchronously using <code>MeterReadingTask</code> worker thread
+                                    </p>
+                                </div>
+                            </div>
+
+                            <form id="form-add-reading">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="input-reading-id">Reading ID</label>
+                                        <input type="text" id="input-reading-id" class="form-input"
+                                            placeholder="e.g. R-101" required>
+                                        <span class="help-text">Must be unique (rejects duplicates)</span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="select-meter-id">Meter ID</label>
+                                        <select id="select-meter-id" class="form-select" required>
+                                            <option value="MTR-101">MTR-101 (Server Racks - Science Centre)</option>
+                                            <option value="MTR-102">MTR-102 (Central HVAC - Academic Block)</option>
+                                            <option value="MTR-ENG-01">MTR-ENG-01 (Power Lab - Engg Complex)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="input-energy-val">Energy Consumed (kWh)</label>
+                                        <input type="number" id="input-energy-val" class="form-input" step="0.1" min="0"
+                                            placeholder="e.g. 75.5" required>
+                                        <span class="help-text">Must be a finite, non-negative number</span>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="input-timestamp">Timestamp</label>
+                                        <input type="datetime-local" id="input-timestamp" class="form-input">
+                                        <span class="help-text">Leave blank to use current local time</span>
+                                    </div>
+
+                                    <div class="form-group full-width">
+                                        <button type="submit" class="btn btn-primary" id="btn-submit-reading"
+                                            style="width: 100%;">
+                                            <span>⚡</span> Record Reading via Background Thread
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Column 2: Simulation Controls -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <h3>Simulation Controls</h3>
+                                    <p>Execute live telemetry streaming, concurrency tests, and benchmark data</p>
+                                </div>
+                            </div>
+
+                            <!-- Automatic Live Meter Monitoring Simulation -->
+                            <div
+                                style="background-color: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 18px; margin-bottom: 16px;">
+                                <div
+                                    style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <h4 style="font-size: 15px; font-weight: 700;">Automatic Live Meter
+                                                Monitoring</h4>
+                                            <span class="badge" id="auto-monitor-badge"
+                                                style="background-color: #f1f5f9; color: var(--text-muted); border: 1px solid var(--border-color); font-size: 11px;">Inactive</span>
+                                        </div>
+                                        <p
+                                            style="font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-top: 4px;">
+                                            Continuously generates simulated smart meter readings every 5 seconds across
+                                            campus meters (<code>MTR-101</code>, <code>MTR-102</code>,
+                                            <code>MTR-ENG-01</code>), with occasional high-load spikes to trigger
+                                            anomaly detection and automatically refresh all dashboard views.
+                                        </p>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                        <button class="btn btn-primary btn-sm" id="btn-start-monitoring"
+                                            style="white-space: nowrap;">
+                                            <span>▶️</span> Start Monitoring
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" id="btn-stop-monitoring" disabled
+                                            style="white-space: nowrap;">
+                                            <span>⏹️</span> Stop Monitoring
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="auto-monitor-status-box"
+                                    style="font-size: 12px; background-color: #ffffff; padding: 12px; border-radius: var(--radius-sm); border-left: 3px solid var(--border-color); display: flex; flex-direction: column; gap: 6px;">
+                                    <div
+                                        style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div class="status-pulse" id="auto-monitor-pulse"
+                                                style="width: 8px; height: 8px; background-color: var(--text-muted); animation: none; flex-shrink: 0;">
+                                            </div>
+                                            <span id="auto-monitor-status-text"
+                                                style="font-weight: 600; color: var(--text-secondary);">Monitoring is
+                                                currently stopped. Click 'Start Monitoring' to begin automatic 5-second
+                                                ingestion.</span>
+                                        </div>
+                                        <span id="auto-monitor-count"
+                                            style="font-size: 11px; color: var(--text-muted); font-weight: 600; background-color: var(--bg-page); padding: 2px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">Simulated
+                                            readings: 0</span>
+                                    </div>
+                                    <div id="auto-monitor-details"
+                                        style="display: none; font-size: 11px; color: var(--text-secondary); padding-top: 4px; border-top: 1px dashed var(--border-color);">
+                                    </div>
+                                </div>
+                                <div
+                                    style="margin-top: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.3;">
+                                    <em>⚠️ Synthetic Simulation: Generated readings use prefix <code>SIM-AUTO-</code> to
+                                        demonstrate real-time telemetry and anomaly detection. No physical electricity
+                                        meters are connected.</em>
+                                </div>
+                            </div>
+
+                            <!-- Concurrency Simulation -->
+                            <div
+                                style="background-color: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 18px; margin-bottom: 16px;">
+                                <div
+                                    style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+                                    <div>
+                                        <h4 style="font-size: 15px; font-weight: 700;">Simulate Concurrent Meter
+                                            Readings</h4>
+                                        <p
+                                            style="font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-top: 4px;">
+                                            Launches two simultaneous worker threads (<code>MeterThread-1</code> and
+                                            <code>MeterThread-2</code>) that concurrently insert readings into the
+                                            shared thread-safe <code>EnergyReadingManager</code>.
+                                        </p>
+                                    </div>
+                                    <button class="btn btn-success btn-sm" id="btn-run-concurrent"
+                                        style="white-space: nowrap;">
+                                        <span>▶️</span> Run Concurrency Test
+                                    </button>
+                                </div>
+                                <div id="concurrent-result-box"
+                                    style="display: none; font-size: 12px; background-color: #ffffff; padding: 10px; border-radius: var(--radius-sm); border-left: 3px solid var(--primary-500);">
+                                </div>
+                            </div>
+
+                            <!-- Historical Data Injection -->
+                            <div
+                                style="background-color: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 18px;">
+                                <div
+                                    style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+                                    <div>
+                                        <h4 style="font-size: 15px; font-weight: 700;">Load Simulated Historical
+                                            Readings</h4>
+                                        <p
+                                            style="font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-top: 4px;">
+                                            Populates sample readings timestamped yesterday and the previous calendar
+                                            week (prefixed with <code>SIM-HIST-</code>) to exercise daily &amp; weekly
+                                            comparisons.
+                                        </p>
+                                    </div>
+                                    <button class="btn btn-amber btn-sm" id="btn-load-historical"
+                                        style="white-space: nowrap;">
+                                        <span>📥</span> Load Historical Data
+                                    </button>
+                                </div>
+                                <div id="historical-result-box"
+                                    style="display: none; font-size: 12px; background-color: #ffffff; padding: 10px; border-radius: var(--radius-sm); border-left: 3px solid var(--warning);">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Complete Readings Log Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <h3>Full Reading Ingestion Log</h3>
+                                <p>All energy records currently stored in backend memory (sorted newest first)</p>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="filter-readings-input" class="form-input"
+                                    placeholder="Search reading or meter ID..."
+                                    style="width: 220px; padding: 6px 12px; font-size: 12px;">
+                            </div>
+                        </div>
+                        <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Reading ID</th>
+                                        <th>Meter ID</th>
+                                        <th>Building</th>
+                                        <th>Energy Consumed (kWh)</th>
+                                        <th>Timestamp</th>
+                                        <th>Ingestion Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="full-readings-table-body">
+                                    <tr>
+                                        <td colspan="6" class="empty-state">Loading readings from backend...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Application Script -->
+    <script src="js/app.js"></script>
+</body>
+
+</html>
