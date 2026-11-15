@@ -43,3 +43,7 @@ Java Mini Project
 ### 3. View Readings & Total Energy
 
 ![View Readings Total](EcoCampus_Screenshots/03_View_Readings_Total.png.png)
+
+### 4. Anomaly Detection
+
+![Anomaly Detection](EcoCampus_Screenshots/04_Anomaly_Detection.png.png)
