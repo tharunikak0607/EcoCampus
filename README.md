@@ -39,3 +39,7 @@ Java Mini Project
 ### 2. View All Readings
 
 ![View All Readings](EcoCampus_Screenshots/02_All_Readings.png.png)
+
+### 3. View Readings & Total Energy
+
+![View Readings Total](EcoCampus_Screenshots/03_View_Readings_Total.png.png)
